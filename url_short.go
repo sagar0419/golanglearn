@@ -10,9 +10,15 @@ import (
 
 var urlDb = make(map[string]string)
 var url string
+var y string
 
 func HomePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "To make a short url, enter your URL after /api?url= for eg:- http://localhost:8000/api?url=www.xyz.com \n")
+	if y == "" {
+		fmt.Fprintf(w, "To make a short url, enter your URL after /api?url= for eg:- http://localhost:8000/api?url=www.xyz.com \n")
+	} else {
+		http.Redirect(w, r, y, http.StatusSeeOther)
+	}
+
 }
 
 func Api(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +35,8 @@ func Api(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "Your short URL is", value)
 			return
 		}
+		x := r.URL.Query()
+		y = x["url"][0]
 
 		random := rand.Int()
 		str := strconv.Itoa(random)
@@ -37,7 +45,6 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		newUrl := address + shortStr
 		fmt.Fprintln(w, "Your short URL is", newUrl)
 		urlDb[url] = newUrl
-
 	}
 }
 
