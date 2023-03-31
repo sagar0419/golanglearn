@@ -15,7 +15,7 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "To make a short url, enter your URL after /api?url= for eg:- http://localhost:8000/api?url=www.xyz.com \n")
 }
 
-func LandingUrl(w http.ResponseWriter, r *http.Request) {
+func Api(w http.ResponseWriter, r *http.Request) {
 
 	address := "http://localhost:8000/"
 
@@ -44,7 +44,7 @@ func LandingUrl(w http.ResponseWriter, r *http.Request) {
 func main() {
 
 	http.HandleFunc("/", HomePage)
-	http.HandleFunc("/api/", LandingUrl)
+	http.HandleFunc("/api/", Api)
 
 	fmt.Println("Server is listening on localhost 8000")
 	http.ListenAndServe(":8000", nil)
