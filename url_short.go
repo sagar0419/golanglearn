@@ -175,11 +175,62 @@ func Count(url string) {
 
 	err = db.QueryRowContext(ctx, query).Scan(&count)
 	if err != nil {
-		log.Print("unable to execute query in db", err)
+		log.Print("unable to execute count query in db", err)
 		return
 	}
-	log.Print("Query executed successfully on main ", count)
+	log.Print(" COunt Query executed successfully  ", count)
 	return
+}
+
+// Metrics
+type domain struct {
+	counts int
+	main   string
+}
+
+func MetricsDb() ([]domain, error) {
+	query := `SELECT url_count, main_url FROM url;`
+
+	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+
+	db, err := sql.Open("mysql", dsn())
+	if err != nil {
+		log.Print("unable to open db for query on main", err)
+		panic(err)
+	}
+	defer db.Close()
+
+	stmt, err := db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Print("unable to prepare statement for query on metrics", err)
+		panic(err)
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx)
+	if err != nil {
+		log.Print("unable to execute query in db", err)
+		panic(err)
+	}
+	defer rows.Close()
+
+	var counts []domain
+	for rows.Next() {
+		var d domain
+		if err := rows.Scan(&d.counts, &d.main); err != nil {
+			log.Print("unable to scan row in db", err)
+			panic(err)
+		}
+		counts = append(counts, d)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Print("error in db rows", err)
+		panic(err)
+	}
+
+	return counts, nil
 }
 
 // REDIRECT FUNCTION
@@ -195,7 +246,7 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 			return
 		} else {
 			s := (QueryUrlMain(y))
-			fmt.Println("jai ho")
+			fmt.Println("On redirect function")
 			http.Redirect(w, r, s, http.StatusSeeOther)
 			Count(y)
 			return
@@ -237,12 +288,22 @@ func Api(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Metrics Handle func
+func Metrics(w http.ResponseWriter, r *http.Request) {
+	a, _ := MetricsDb()
+	for _, value := range a {
+		metricsvalue := fmt.Sprintf(" %v\n", value)
+		fmt.Fprintf(w, metricsvalue)
+	}
+}
+
 // MAIN FUNCTION
 func main() {
 	CreateDb(dbName)
 	CreateTable()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/", Api)
+	mux.HandleFunc("/metrics", Metrics)
 	mux.HandleFunc("/", HomePage)
 
 	fmt.Println("Server is listening on localhost 8000")
