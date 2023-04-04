@@ -1,0 +1,8 @@
+all_in_one/.gitignore
+all_in_one/.git 
+all_in_one/main.go
+all_in_one/go.mod
+all_in_one/old/*
+all_in_one/text
+all_in_one/.old
+all_in_one/db
